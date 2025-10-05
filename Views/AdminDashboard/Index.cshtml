@@ -1,0 +1,450 @@
+﻿@model SMSProject.Models.CourseM
+@{
+    ViewBag.Title = "Admin Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var activeTab = ViewBag.ActiveTab ?? "students";
+}
+
+<div class="dashboard-cards">
+    <div class="card">
+        <span class="icon"><i class="fas fa-user-graduate"></i></span>
+        <div class="label">Total Students</div>
+        <div class="count" id="pendingCounter" data-value="@ViewBag.TotalEnrollments">0</div>
+    </div>
+
+    <div class="card">
+        <span class="icon"><i class="fas fa-book"></i></span>
+        <div class="label">Total Courses</div>
+        <div class="count" id="pendingCounter" data-value="@ViewBag.TotalCourses">0</div>
+    </div>
+
+    <div class="card">
+        <span class="icon"><i class="fas fa-user-clock"></i></span>
+        <div class="label">Pending Requests</div>
+        <div class="count" id="pendingCounter" data-value="@ViewBag.PendingRequests">0</div>
+    </div>
+
+    <div class="card">
+        <span class="icon"><i class="fas fa-user-check"></i></span>
+        <div class="label">Approved Requests</div>
+        <div class="count" id="approvedCounter" data-value="@ViewBag.ApprovedRequests">0</div>
+    </div>
+
+    <div class="card">
+        <span class="icon"><i class="fas fa-user-edit"></i></span>
+        <div class="label">Active Enrollment</div>
+        <div class="count" id="enrollmentCounter" data-value="@ViewBag.TotalStudents">0</div>
+    </div>
+</div>
+
+<div class="filters">
+    @using (Html.BeginForm("Index", "AdminDashboard", FormMethod.Get))
+    {
+        <input type="hidden" name="activeTab" value="@activeTab" />
+        <input type="text" name="searchTerm" value="@Request.QueryString["searchTerm"]" class="search-input" placeholder="Search Students..." />
+
+        <select name="department" class="filter-select">
+            <option value="">All Departments</option>
+            <option value="BSSE" @(Request.QueryString["department"] == "BSSE" ? "selected" : "")>BSSE</option>
+            <option value="BSAI" @(Request.QueryString["department"] == "BSAI" ? "selected" : "")>BSAI</option>
+            <option value="BSCS" @(Request.QueryString["department"] == "BSCS" ? "selected" : "")>BSCS</option>
+        </select>
+
+        <select name="semester" class="filter-select">
+            <option value="">All Semesters</option>
+            @for (int i = 1; i <= 8; i++)
+            {
+                <option value="@i" @(Request.QueryString["semester"] == i.ToString() ? "selected" : "")>@i</option>
+            }
+        </select>
+
+        <select name="gender" class="filter-select">
+            <option value="">All Gender</option>
+            <option value="Male" @(Request.QueryString["gender"] == "Male" ? "selected" : "")>Male</option>
+            <option value="Female" @(Request.QueryString["gender"] == "Female" ? "selected" : "")>Female</option>
+            <option value="Other" @(Request.QueryString["gender"] == "Other" ? "selected" : "")>Other</option>
+        </select>
+        <button type="submit" class="btn btn-secondary">Search & Sort</button>
+    }
+</div>
+
+<div class="tabs-navigation">
+    <a href="@Url.Action("Index", new { activeTab = "students" })" class="tab-link @(activeTab == "students" ? "active" : "")">
+        Students
+    </a>
+    <a href="@Url.Action("Index", new { activeTab = "pending" })" class="tab-link @(activeTab == "pending" ? "active" : "")">
+        Pending Requests
+    </a>
+    <a href="@Url.Action("Index", new { activeTab = "approved" })" class="tab-link @(activeTab == "approved" ? "active" : "")">
+        Approved Requests
+    </a>
+</div>
+
+<div class="tab-content">
+    @if (activeTab == "students")
+    {
+        <table class="courses-table table table-bordered">
+            <thead>
+                <tr>
+                    <th>Photo</th>
+                    <th>Enrollment ID</th>
+                    <th>Student ID</th>
+                    <th>Student Name</th>
+                    <th>Gender</th>
+                    <th>Department</th>
+                    <th>Semester</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var enroll in Model.EnrollList)
+                {
+                    <tr>
+                       <td>
+                           @if (enroll.Photo != null && enroll.Photo.Length > 0)
+                           {
+                               <img src="data:image/jpeg;base64,@Convert.ToBase64String(enroll.Photo)"
+                                    alt="Student Photo"
+                                    style="width: 50px; height: 50px; border-radius: 50%;" />
+                           }
+                           else
+                           {
+                               <img src="~/Content/Images/default-profile.png"
+                                    alt="Default Photo"
+                                    style="width: 50px; height: 50px; border-radius: 50%;" />
+                           }
+                       </td>
+                        <td>@enroll.EnrollmentID</td>
+                        <td>@enroll.StudentID</td>
+                        <td>@enroll.StudentName</td>
+                        <td>@enroll.Gender</td>
+                        <td>@enroll.Department</td>
+                        <td>@enroll.Semester</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else if (activeTab == "pending")
+    {
+        <div class="pending-requests">
+            @foreach (var signup in Model.PendingSignupsStd)
+            {
+                <div class="request-card">
+                    <div class="profile-icon">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="student-info">
+                        <h3>@signup.StudentID</h3>
+                        <div class="info-grid">
+                            @signup.Status
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        @using (Html.BeginForm("UpdateSignupStatus", "AdminDashboard", FormMethod.Post))
+                        {
+                            @Html.Hidden("studentId", signup.StudentID)
+                            <button type="submit" name="status" value="Approved" class="btn btn-success">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                            <button type="submit" name="status" value="Declined" class="btn btn-danger">
+                                <i class="fas fa-times"></i> Decline
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else if (activeTab == "approved")
+    {<div class="student-cards-grid">
+    @foreach (var signup in Model.ApprovedSignupsStd)
+    {
+        <div class="student-card">
+            <div class="avatar-circle">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <div class="details-container">
+                <h3>@signup.Name</h3>
+                <span class="status-indicator">Approved</span>
+                <div class="details-grid">
+                    <div class="detail-row">
+                        <label>ID:</label>
+                        <span>@signup.StudentID</span>
+                    </div>
+                    <div class="detail-row">
+                        <label>Phone:</label>
+                        <span>@signup.Phone</span>
+                    </div>
+                    <div class="detail-row">
+                        <label>Gender:</label>
+                        <span>@signup.Gender</span>
+                    </div>
+                    <div class="detail-row">
+                        <label>Email:</label>
+                        <span>@signup.Email</span>
+                    </div>
+                    <div class="detail-row">
+                        <label>City:</label>
+                        <span>@signup.City</span>
+                    </div>
+                    <div class="detail-row">
+                        <label>Address:</label>
+                        <span>@signup.Address</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+  }
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const counters = document.querySelectorAll('.count');
+
+        counters.forEach(counter => {
+            const finalValue = parseInt(counter.dataset.value);
+            let currentValue = 0;
+
+            const interval = setInterval(() => {
+                if (currentValue < finalValue) {
+                    currentValue++;
+                    counter.textContent = currentValue;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 100);
+        });
+    });
+</script>
+
+
+        <style>
+            .tabs-navigation {
+                margin: 20px 0;
+                border-bottom: 2px solid #dee2e6;
+            }
+
+            .tab-link {
+                display: inline-block;
+                padding: 10px 20px;
+                margin-right: 5px;
+                text-decoration: none;
+                color: #495057;
+                border-radius: 4px 4px 0 0;
+            }
+
+                .tab-link.active {
+                    background-color: #007bff;
+                    color: white;
+                    border: 1px solid #007bff;
+                }
+
+                .tab-link:hover:not(.active) {
+                    background-color: #e9ecef;
+                }
+
+            .tab-content {
+                padding: 20px;
+                background-color: #fff;
+                border-radius: 0 0 4px 4px;
+            }
+
+            .btn-sm {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.875rem;
+                margin: 0 2px;
+            }
+
+            .filters {
+                display: flex;
+                gap: 12px;
+                margin-top: 50px;
+                margin-right: 10px;
+                margin-left: 10px;
+                min-width: 1100px;
+                flex-wrap: wrap; /* Optional: allows wrapping on smaller screens */
+            }
+
+            .search-input,
+            .filter-select,
+            .btn-secondary {
+                padding: 8px 12px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                font-size: 14px;
+                height: 40px;
+            }
+
+            /* Optional: limit width to keep layout neat */
+            .search-input {
+                width: 400px;
+                height: 20px; /* Adjusted height for consistency */
+            }
+
+            .filter-select {
+                width: 220px;
+            }
+
+            .btn-secondary {
+                background-color: #007bff;
+                color: white;
+                border: none;
+                cursor: pointer;
+                width: 120px;
+            }
+
+
+
+
+
+
+            .pending-requests {
+                display: grid;
+                gap: 20px;
+                padding: 20px;
+                margin-left: 20px;
+                margin-right: 20px;
+            }
+
+            .request-card {
+                background: white;
+                border-radius: 10px;
+                padding: 20px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                display: grid;
+                grid-template-columns: auto 1fr auto;
+                gap: 20px;
+                align-items: center;
+            }
+
+            .profile-icon {
+                font-size: 48px;
+                color: #6c757d;
+            }
+
+            .student-info {
+                flex-grow: 1;
+            }
+
+            .info-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 10px;
+                margin-top: 10px;
+            }
+
+            .info-item {
+                display: flex;
+                gap: 10px;
+            }
+
+                .info-item label {
+                    color: #6c757d;
+                    font-weight: 500;
+                }
+
+            .action-buttons {
+                display: flex;
+                gap: 10px;
+            }
+
+            .btn-success {
+                background: #28a745;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+
+            .btn-danger {
+                background: #dc3545;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+        </style>
+
+
+<style>
+    .student-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .student-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        display: flex;
+        gap: 20px;
+        position: relative;
+    }
+
+    .avatar-circle {
+        width: 50px;
+        height: 50px;
+        background: #4B6BFB;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .avatar-circle i {
+            font-size: 24px;
+            color: white;
+        }
+
+    .details-container {
+        flex: 1;
+    }
+
+        .details-container h3 {
+            color: #333;
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+    .details-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .detail-row {
+        display: flex;
+        gap: 8px;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+        .detail-row label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .detail-row span {
+            color: #333;
+        }
+
+    .status-indicator {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        padding: 4px 12px;
+        border-radius: 12px;
+        background: #FFF3DC;
+        color: #FFB800;
+        font-size: 12px;
+        font-weight: 500;
+    }
+</style>
+

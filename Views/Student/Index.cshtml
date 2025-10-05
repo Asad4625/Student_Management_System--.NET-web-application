@@ -1,0 +1,884 @@
+﻿@model SMSProject.Models.CourseM
+
+
+
+
+@{
+    ViewBag.Title = "Student Management";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="course-container">
+    <div class="header">
+        <h1>Student Management</h1>
+        <button type="button" class="add-course-btn" id="addCourseBtn">
+            <span>+</span> Add New Student
+        </button>
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success">@TempData["Success"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger"><p style="color:red;">@TempData["Error"]</p></div>
+        }
+
+
+        @if (!string.IsNullOrEmpty(ViewBag.insertFa as string))
+        {
+            <p>@ViewBag.insertFa</p>
+        }
+
+        @if (!string.IsNullOrEmpty(ViewBag.insertSu as string))
+        {
+            <p>@ViewBag.insertSu</p>
+        }
+
+    </div>
+
+    <!-- The Modal -->
+    <div id="addCourseModal" class="modal">
+        <div class="modal-content">
+
+            <span class="close" id="closeModal">&times;</span>
+            <h2>Add New Student</h2>
+            @using (Html.BeginForm("Add", "Student", FormMethod.Post, new { @id = "courseForm", enctype = "multipart/form-data" }))
+            {
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Student ID</label>
+                            @Html.TextBoxFor(m => m.NewStudent.StudentID, new { @class = "form-control", placeholder = "2025-BIIT-4266", required = "required" })
+                            @Html.ValidationMessageFor(m => m.NewStudent.StudentID, "", new { @class = "text-danger" })
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Name</label>
+                            @Html.TextBoxFor(m => m.NewStudent.Name, new { @class = "form-control", required = "required" })
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>CNIC</label>
+                            @Html.TextBoxFor(m => m.NewStudent.CNIC, new { @class = "form-control", placeholder = "12345-1234567-1", required = "required" })
+                            @Html.ValidationMessageFor(m => m.NewStudent.CNIC, "", new { @class = "text-danger" })
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Gender</label>
+                            @Html.DropDownListFor(m => m.NewStudent.Gender, new SelectList(new[] { "Male", "Female", "Other" }), "-- Select Gender --", new { @class = "form-control", required = "required" })
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Email</label>
+                            @Html.TextBoxFor(m => m.NewStudent.Email, new { @class = "form-control", type = "email", required = "required" })
+                            @Html.ValidationMessageFor(m => m.NewStudent.Email, "", new { @class = "text-danger" })
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Phone</label>
+                            @Html.TextBoxFor(m => m.NewStudent.Phone, new { @class = "form-control", placeholder = "03001234567", required = "required" })
+                            @Html.ValidationMessageFor(m => m.NewStudent.Phone, "", new { @class = "text-danger" })
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>City</label>
+                            @Html.TextBoxFor(m => m.NewStudent.City, new { @class = "form-control", required = "required" })
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Photo</label>
+                            <input type="file" name="PhotoFile" class="form-control" accept="image/*" />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Address</label>
+                        @Html.TextAreaFor(m => m.NewStudent.Address, new { @class = "form-control", rows = 3, required = "required" })
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Add Student</button>
+                    <button type="button" class="btn btn-secondary" id="cancelModal">Cancel</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Style -->
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<!-- Script -->
+<!-- Script -->
+<script>
+    $(document).ready(function () {
+        // Add Course Modal
+        const addModal = $("#addCourseModal");
+        const addForm = $("#courseForm");
+
+        // Update Course Modal
+        const updateModal = $("#updateCourseModal");
+        const updateForm = $("#updateCourseForm");
+
+        // Open Add Modal
+        $("#addCourseBtn").on("click", function () {
+            addForm[0].reset();
+            addModal.fadeIn();
+        });
+
+
+        $(".action-menu-btn").on("click", function (e) {
+            e.stopPropagation();
+            // Close other open menus
+            $(".action-menu-dropdown").hide();
+            // Open this one
+            $(this).siblings(".action-menu-dropdown").toggle();
+        });
+
+        // Close dropdown if clicked outside
+        $(document).on("click", function () {
+            $(".action-menu-dropdown").hide();
+        });
+
+        // Prevent closing when clicking inside the dropdown
+        $(".action-menu-dropdown").on("click", function (e) {
+            e.stopPropagation();
+        });
+
+
+        // Open Update Modal on Edit button click
+        // Edit button click handler
+        $(".editCourseBtn").click(function () {
+            var studentId = $(this).data("course-id");
+
+            $.ajax({
+                url: '/Student/GetStudentById',
+                type: 'GET',
+                data: { id: studentId },
+                success: function (response) {
+                    if (response.success && response.data) {
+                        const student = response.data;
+
+                        // Set the hidden ID field
+                        $("#UpdateStudent_ID").val(student.StudentID);
+
+                        // Populate form fields
+                        $("#UpdateStudent_StudentID").val(student.StudentID);
+                        $("#UpdateStudent_Name").val(student.Name);
+                        $("#UpdateStudent_CNIC").val(student.CNIC);
+                        $("#UpdateStudent_Gender").val(student.Gender);
+                        $("#UpdateStudent_Email").val(student.Email);
+                        $("#UpdateStudent_Phone").val(student.Phone);
+                        $("#UpdateStudent_City").val(student.City);
+                        $("#UpdateStudent_Address").val(student.Address);
+
+                        // Update current photo
+                        if (student.PhotoUrl) {
+                            $("#currentPhoto").attr("src", student.PhotoUrl).show();
+                        } else {
+                            $("#currentPhoto").hide();
+                        }
+
+                        $("#updateCourseModal").fadeIn();
+                    }
+                },
+                error: function () {
+                    alert("Failed to load student details.");
+                }
+            });
+        });
+
+        // Handle form submission
+        $("#updateStudentForm").submit(function (e) {
+            e.preventDefault();
+
+            var formData = new FormData(this);
+
+            $.ajax({
+                url: $(this).attr('action'),
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    $("#updateCourseModal").fadeOut();
+                    location.reload(); // Reload to show updated data
+                },
+                error: function () {
+                    alert("Failed to update student.");
+                }
+            });
+        });
+
+        // Close Add Modal
+        $("#closeModal, #cancelModal").on("click", function () {
+            addModal.fadeOut();
+            addForm[0].reset();
+        });
+
+        // Close Update Modal
+        $("#closeUpdateModal, #cancelUpdateModal").on("click", function () {
+            updateModal.fadeOut();
+            updateForm[0].reset();
+        });
+        // View Course Modal
+        $(".viewCourseBtn").click(function () {
+            var studentId = $(this).data("course-id");
+            $.ajax({
+                url: '/Student/GetStudentById',
+                type: 'GET',
+                data: { id: studentId },
+                success: function (response) {
+                    if (response.success && response.data) {
+                        const student = response.data;
+
+                        $("#ViewStudent_StudentID").text(student.StudentID);
+                        $("#ViewStudent_Name").text(student.Name);
+                        $("#ViewStudent_CNIC").text(student.CNIC);
+                        $("#ViewStudent_Gender").text(student.Gender);
+                        $("#ViewStudent_Email").text(student.Email);
+                        $("#ViewStudent_Phone").text(student.Phone);
+                        $("#ViewStudent_City").text(student.City);
+                        $("#ViewStudent_Address").text(student.Address);
+
+                        // Handle photo display
+                        if (student.PhotoUrl) {
+                            $("#ViewStudent_Photo").attr("src", student.PhotoUrl);
+                        } else {
+                            $("#ViewStudent_Photo").attr("src", "/Content/Images/default-profile.png");
+                        }
+
+                        $("#viewCourseModal").fadeIn();
+                    } else {
+                        alert("Failed to load student details.");
+                    }
+                },
+                error: function () {
+                    alert("Error loading student details.");
+                }
+            });
+        });
+
+        // Close modal logic
+        $("#closeViewModal, #closeViewModalBtn").on("click", function () {
+            $("#viewCourseModal").fadeOut();
+        });
+        // Prevent Enter key from submitting the form in Add
+        addForm.on("keydown", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+            }
+        });
+
+        // Prevent Enter key from submitting the form in Update
+        updateForm.on("keydown", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+            }
+        });
+
+        // Prevent form submission if any field is empty (Add)
+        addForm.on("submit", function (e) {
+            let isValid = true;
+            addForm.find(".form-control[required]").each(function () {
+                if (!$(this).val().trim()) {
+                    $(this).css("border", "1px solid red");
+                    isValid = false;
+                } else {
+                    $(this).css("border", "1px solid #ccc");
+                }
+            });
+            if (!isValid) {
+                e.preventDefault();
+                alert("Please fill in all required fields.");
+            }
+        });
+        // Close on outside click and reset
+        function handleModalOutsideClick(event) {
+            const modals = [
+                { id: "#addCourseModal", form: "#courseForm" },
+                { id: "#updateCourseModal", form: "#updateCourseForm" },
+                { id: "#viewCourseModal", form: null }
+            ];
+
+            modals.forEach(function (modal) {
+                if ($(event.target).is(modal.id)) {
+                    $(modal.id).fadeOut();
+                    if (modal.form) {
+                        $(modal.form)[0].reset();
+                    }
+                }
+            });
+        }
+
+        $(window).on("click", handleModalOutsideClick);
+
+        // Prevent form submission if any field is empty (Update)
+        updateForm.on("submit", function (e) {
+            let isValid = true;
+            updateForm.find(".form-control[required]").each(function () {
+                if (!$(this).val().trim()) {
+                    $(this).css("border", "1px solid red");
+                    isValid = false;
+                } else {
+                    $(this).css("border", "1px solid #ccc");
+                }
+            });
+            if (!isValid) {
+                e.preventDefault();
+                alert("Please fill in all required fields.");
+            }
+        });
+    });
+</script>
+
+
+<!-- The Modal -->
+<!-- Update Course Modal -->
+<div id="updateCourseModal" class="modal">
+    <div class="modal-content">
+        <span class="close" id="closeUpdateModal">&times;</span>
+        <h2>Edit Student</h2>
+        @using (Html.BeginForm("Update", "Student", FormMethod.Post, new { @id = "updateStudentForm", enctype = "multipart/form-data" }))
+        {
+            <input type="hidden" id="UpdateStudent_ID" name="StudentID" />
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>Student ID</label>
+                        <input type="text" id="UpdateStudent_StudentID" name="StudentID" class="form-control" required />
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Name</label>
+                        <input type="text" id="UpdateStudent_Name" name="Name" class="form-control" required />
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>CNIC</label>
+                        <input type="text" id="UpdateStudent_CNIC" name="CNIC" class="form-control" required />
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Gender</label>
+                        <select id="UpdateStudent_Gender" name="Gender" class="form-control" required>
+                            <option value="">-- Select Gender --</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>Email</label>
+                        <input type="email" id="UpdateStudent_Email" name="Email" class="form-control" required />
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Phone</label>
+                        <input type="text" id="UpdateStudent_Phone" name="Phone" class="form-control" required />
+                    </div>
+
+                </div>
+
+
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>City</label>
+                        <input type="text" id="UpdateStudent_City" name="City" class="form-control" required />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <textarea id="UpdateStudent_Address" name="Address" class="form-control" rows="3" required></textarea>
+                </div>
+
+                <div class="form-group col-md-6">
+                    <label>Photo</label>
+                    <input type="file" name="PhotoFile" class="form-control" accept="image/*" />
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-success">Update Student</button>
+                <button type="button" class="btn btn-secondary" id="cancelUpdateModal">Cancel</button>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- View Student Modal -->
+<div id="viewCourseModal" class="modal">
+    <div class="modal-content">
+        <span class="close" id="closeViewModal">&times;</span>
+        <h2>Student Details</h2>
+        <div class="modal-body">
+            <div class="student-photo">
+                <img id="ViewStudent_Photo" src="" alt="Student Photo" />
+            </div>
+            <p><strong>Student ID:</strong> <span id="ViewStudent_StudentID"></span></p>
+            <p><strong>Name:</strong> <span id="ViewStudent_Name"></span></p>
+            <p><strong>CNIC:</strong> <span id="ViewStudent_CNIC"></span></p>
+            <p><strong>Gender:</strong> <span id="ViewStudent_Gender"></span></p>
+            <p><strong>Email:</strong> <span id="ViewStudent_Email"></span></p>
+            <p><strong>Phone:</strong> <span id="ViewStudent_Phone"></span></p>
+            <p><strong>City:</strong> <span id="ViewStudent_City"></span></p>
+            <p><strong>Address:</strong> <span id="ViewStudent_Address"></span></p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="closeViewModalBtn">Close</button>
+        </div>
+    </div>
+</div>
+<div class="filters">
+    @using (Html.BeginForm("Index", "Student", FormMethod.Get))
+    {
+        <input type="text" name="searchTerm" class="search-input" placeholder="Search students..."
+               value="@Request["searchTerm"]" />
+
+        <select name="gender" class="filter-select">
+            <option value="">All Genders</option>
+            <option value="Male" @(Request["gender"] == "Male" ? "selected" : "")>Male</option>
+            <option value="Female" @(Request["gender"] == "Female" ? "selected" : "")>Female</option>
+            <option value="Other" @(Request["gender"] == "Other" ? "selected" : "")>Other</option>
+        </select>
+
+        <button type="submit" class="btn btn-secondary">Apply Filters</button>
+    }
+</div>
+
+<table class="courses-table table table-bordered">
+    <thead>
+        <tr>
+            <th>Student ID</th>
+            <th>Name</th>
+            <th>CNIC</th>
+            <th>Gender</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>City</th>
+            <th>Address</th>
+            <th>Photo</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var student in Model.StudentList)
+        {
+            <tr>
+                <td>@student.StudentID</td>
+                <td>@student.Name</td>
+                <td>@student.CNIC</td>
+                <td>@student.Gender</td>
+                <td>@student.Email</td>
+                <td>@student.Phone</td>
+                <td>@student.City</td>
+
+                <td>@(string.Join(" ", student.Address.Split(' ').Take(3)) + "...")</td>
+                <td>
+                    <img src="data:image/jpeg;base64,@Convert.ToBase64String(student.Photo)"
+                         alt="@student.Name"
+                         class="student-thumbnail" />
+                </td>
+                <td>
+                    <div class="action-menu-container">
+                        <button type="button" class="action-menu-btn">---</button>
+                        <div class="action-menu-dropdown" style="display:none;">
+                            <button type="button" class="btnview viewCourseBtn" data-course-id="@student.StudentID">View</button>
+                            <button type="button" class="btnedit editCourseBtn" data-course-id="@student.StudentID">Edit</button>
+                            @using (Html.BeginForm("Delete", "Student", FormMethod.Post, new { onsubmit = "return confirm('Are you sure?');" }))
+                            {
+                                @Html.Hidden("id", student.StudentID)
+                                <button type="submit" class="btndelete">Delete</button>
+                            }
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- ...existing code... -->
+
+<table class="courses-table table table-bordered">
+    <!-- ...existing code... -->
+</table>
+
+<!-- Pagination Controls -->
+<div class="pagination-container" style="margin: 20px 0; text-align:center;">
+    @if (Model.TotalPages > 1)
+    {
+        <nav>
+            <ul class="pagination" style="display:inline-flex; list-style:none; padding:0;">
+
+                <!-- Previous Button -->
+                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = Model.CurrentPage - 1, pageSize = Model.PageSize, searchTerm = Request["searchTerm"], department = Request["department"], semester = Request["semester"] })">Previous</a>
+                </li>
+
+                @{
+                    int totalPages = Model.TotalPages;
+                    int currentPage = Model.CurrentPage;
+                    int startPage = Math.Max(2, currentPage - 1);
+                    int endPage = Math.Min(totalPages - 1, currentPage + 1);
+                }
+
+                <!-- Page 1 -->
+                <li class="page-item @(currentPage == 1 ? "active" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = 1, pageSize = Model.PageSize, searchTerm = Request["searchTerm"], department = Request["department"], semester = Request["semester"] })">1</a>
+                </li>
+
+                <!-- Left Ellipsis -->
+                @if (startPage > 2)
+                {
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                }
+
+                <!-- Middle Pages -->
+                @for (int i = startPage; i <= endPage; i++)
+                {
+                    <li class="page-item @(i == currentPage ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { page = i, pageSize = Model.PageSize, searchTerm = Request["searchTerm"], department = Request["department"], semester = Request["semester"] })">@i</a>
+                    </li>
+                }
+
+                <!-- Right Ellipsis -->
+                @if (endPage < totalPages - 1)
+                {
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                }
+
+                <!-- Last Page -->
+                @if (totalPages > 1)
+                {
+                    <li class="page-item @(currentPage == totalPages ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { page = totalPages, pageSize = Model.PageSize, searchTerm = Request["searchTerm"], department = Request["department"], semester = Request["semester"] })">@totalPages</a>
+                    </li>
+                }
+
+                <!-- Next Button -->
+                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = Model.CurrentPage + 1, pageSize = Model.PageSize, searchTerm = Request["searchTerm"], department = Request["department"], semester = Request["semester"] })">Next</a>
+                </li>
+            </ul>
+
+            <span style="margin-left:15px;">Page @Model.CurrentPage of @Model.TotalPages</span>
+        </nav>
+    }
+</div>
+
+<!-- ...existing code... -->
+
+
+<style>
+    /* Add this to your <style> section */
+    .action-menu-container {
+        position: relative;
+        display: inline-block;
+    }
+
+    .action-menu-btn {
+        background: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 22px;
+        width: 40px;
+        height: 25px;
+        cursor: pointer;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        transition: background 0.2s;
+    }
+
+        .action-menu-btn:hover {
+            background: #3498db;
+        }
+
+    .action-menu-dropdown {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 45px;
+        background: #ffffff;
+        border: 1px solid #aaa;
+        border-radius: 8px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        z-index: 10;
+        min-width: 120px;
+        padding: 8px 0;
+    }
+
+        .action-menu-dropdown button {
+            display: block;
+            width: 100%;
+            border: none;
+            text-align: left;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+
+
+
+
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.4);
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background-color: #fff;
+        padding: 20px;
+        width: 90%;
+        max-width: 800px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        position: relative;
+    }
+
+    .close {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        font-size: 28px;
+        font-weight: bold;
+        color: #aaa;
+        cursor: pointer;
+    }
+
+        .close:hover {
+            color: #000;
+        }
+
+    .form-row {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+
+    .form-group {
+        flex: 1;
+    }
+
+        .form-group.col-md-6 {
+            flex: 0 0 calc(50% - 10px);
+        }
+
+    .form-control {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    textarea.form-control {
+        resize: vertical;
+    }
+
+    label {
+        font-weight: 500;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding-top: 10px;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .add-course-btn {
+        background-color: #007bff;
+        color: white;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+    .filters {
+        display: flex;
+        gap: 12px;
+        margin-right: 10px;
+        margin-left: 10px;
+        min-width: 1100px;
+        flex-wrap: wrap; /* Optional: allows wrapping on smaller screens */
+    }
+
+    .search-input,
+    .filter-select,
+    .btn-secondary {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        height: 40px;
+    }
+
+    /* Optional: limit width to keep layout neat */
+    .search-input {
+        width: 400px;
+        height: 20px; /* Adjusted height for consistency */
+    }
+
+    .filter-select {
+        width: 220px;
+    }
+
+    .btn-secondary {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+        width: 120px;
+    }
+
+    .btnview, .btnedit, .btndelete {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-right: 7px;
+        margin-top: 5px;
+    }
+
+    .btnview {
+        background-color: #ffffff;
+        color: black;
+        width: 80px;
+    }
+
+        .btnview:hover {
+            background-color: #2980b9;
+        }
+
+    .btnedit {
+        background-color: #ffffff;
+        color: black;
+        width: 80px;
+    }
+
+        .btnedit:hover {
+            background-color: #f39c12;
+        }
+
+    .btndelete {
+        background-color: #ffffff;
+        color: black;
+        width: 80px;
+    }
+
+        .btndelete:hover {
+            background-color: #c0392b;
+        }
+
+
+
+    /* Add to your <style> section */
+    .pagination .page-link {
+        display: block;
+        padding: 8px 14px;
+        margin: 0 2px;
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        color: #007bff;
+        border-radius: 4px;
+        text-decoration: none;
+    }
+
+    .pagination .active .page-link {
+        background: #007bff;
+        color: #fff;
+        border-color: #007bff;
+    }
+
+    .pagination .disabled .page-link {
+        color: #aaa;
+        pointer-events: none;
+        background: #eee;
+    }
+    .student-thumbnail {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 1px solid #ddd;
+    }
+    .student-photo {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+        .student-photo img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+
+    .current-photo {
+        text-align: center;
+        margin: 10px 0;
+    }
+
+        .current-photo img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+</style>

@@ -1,0 +1,152 @@
+﻿@model SMSProject.Models.StudentSignup
+@using System.Web.Mvc
+@using System.Web.Mvc.Html
+
+@{
+    ViewBag.Title = "Student Registration";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Registration</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f8f9fa;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .registration-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .left-panel {
+            background: #0072ce;
+            color: white;
+            padding: 40px;
+            width: 60%;
+        }
+
+        .right-panel {
+            width: 40%;
+            padding: 100px;
+            background: white;
+        }
+
+        .icon-shield {
+            font-size: 48px;
+            margin-bottom: 20px;
+            align-items: center;
+            margin-top: 130px;
+        }
+
+        .features-list {
+            list-style: none;
+            padding: 0;
+            margin-left: 100px;
+            margin-top: 30px;
+        }
+
+            .features-list li {
+                margin-bottom: 15px;
+                display: flex;
+                margin-left: 70px;
+                align-items: center;
+            }
+
+                .features-list li:before {
+                    content: '✓';
+                    margin-right: 10px;
+                    background: rgba(255,255,255,0.2);
+                    border-radius: 50%;
+                    width: 24px;
+                    height: 24px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 14px;
+                }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .btn-primary {
+            background: #0072ce;
+            border: none;
+            padding: 10px 20px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back-link {
+            margin-top: 20px;
+            display: block;
+            color: #0094ff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="registration-container">
+        <div class="left-panel">
+            <div class="icon-shield">🛡️</div>
+            <h2>Student Registration</h2>
+            <p>Register your student account to access your academic profile.</p>
+
+            <ul class="features-list">
+                <li>View your assigned courses</li>
+                <li>Track your academic progress</li>
+                <li>Monitor reattempt status for failed courses</li>
+            </ul>
+        </div>
+
+        <div class="right-panel">
+            <h3 class="mb-4">Create Student Account</h3>
+            @if (TempData["Success2"] != null)
+            {
+               <p style="color:red;">@TempData["Success2"]</p>
+            }<br />
+            @using (Html.BeginForm("Register", "StudentSignup", FormMethod.Post, new { enctype = "multipart/form-data" }))
+            {
+                @Html.AntiForgeryToken()
+                <div class="form-group">
+                    @Html.LabelFor(s => s.StudentID)
+                    @Html.TextBoxFor(s => s.StudentID, new { @class = "form-control", placeholder = "e.g. 2025-BIIT-4261" })
+                    @Html.ValidationMessageFor(s => s.StudentID, "", new { @class = "text-danger" })
+                </div>
+
+                <div class="form-group">
+                    @Html.LabelFor(m => m.Password)
+                    @Html.PasswordFor(m => m.Password, new { @class = "form-control", placeholder = "Create a password" })
+                    @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger" })
+                </div>
+
+
+                <button type="submit" class="btn btn-primary">SignUp</button>
+
+                <div class="login-link">
+                    Already have an account?
+                    @Html.ActionLink("Login", "StudentLogin", "StudentSignup", null, new { @class = "text-primary" })
+                </div>
+
+                @Html.ActionLink("← Back to home", "Index", "Home", null, new { @class = "back-link" })
+            }
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
+
+</body>
+</html>

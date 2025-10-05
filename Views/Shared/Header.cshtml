@@ -1,0 +1,66 @@
+﻿<header class="main-header">
+    <div class="container">
+        <div class="logo">
+            <img src="https://img.icons8.com/ios-filled/40/000000/graduation-cap.png" alt="Logo" style="height:32px; width:32px;" />
+            <span>University Admin Portal</span>
+        </div>
+        <nav class="navbar">
+            <a href="@Url.Action("Index", "AdminDashboard")"  class="nav-link">Dashboard</a>
+            <a href="@Url.Action("Index", "Student")" class="nav-link">Students</a>
+            <a href="@Url.Action("Index", "Courses")" class="nav-link">Courses</a>
+            <a href="@Url.Action("Index", "Enrollment")" class="nav-link">Enrollments</a>
+
+        </nav>
+        <div class="profile-menu">
+            <div class="profile-icon" id="profileIcon">
+                <img src="@ViewBag.AdminPhoto" alt="Profile" />
+            </div>
+            <div class="profile-dropdown" id="profileDropdown">
+                <center><a>Profile</a></center>
+                
+                <div class="text-center mb-2">
+                    <div style="text-align:center;">
+                        <img src="@ViewBag.AdminPhoto" class="rounded-circle" alt="Profile" style="width:120px; height:120px; border-radius:50%; object-fit:cover;" />
+                        </div>
+
+                        <p><strong>CNIC:</strong> @ViewBag.AdminCNIC</p>
+                        <p><strong>Name:</strong> @ViewBag.AdminName</p>
+                        <p><strong>Email:</strong> @ViewBag.AdminEmail</p>
+                        <p><strong>Phone:</strong> @ViewBag.AdminPhone</p>
+                        <p><strong>City:</strong> @ViewBag.AdminCity</p>
+                    </div>
+
+
+
+                    <a href="@Url.Action("Index", "Home")" onclick="clearSession()">Logout</a>
+
+
+                </div>
+        </div>
+    </div>
+</header>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const profileIcon = document.getElementById("profileIcon");
+        const profileDropdown = document.getElementById("profileDropdown");
+
+        profileIcon.addEventListener("click", function (e) {
+            e.stopPropagation(); // Prevent click from closing the dropdown immediately
+            profileDropdown.classList.toggle("show");
+        });
+
+        document.addEventListener("click", function () {
+            profileDropdown.classList.remove("show");
+        });
+    });
+</script>
+<script>
+    const links = document.querySelectorAll('.nav-link');
+
+    links.forEach(link => {
+        link.addEventListener('click', function () {
+            links.forEach(l => l.classList.remove('active')); // Remove from all
+            this.classList.add('active'); // Add to clicked
+        });
+    });
+</script>

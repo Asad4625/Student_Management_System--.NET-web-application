@@ -1,0 +1,755 @@
+﻿@model SMSProject.Models.CourseM
+
+@{
+    ViewBag.Title = "Student Management";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="student-container">
+    <div class="header">
+        <h1>Student Management</h1>
+        <button type="button" class="add-student-btn" id="addStudentBtn">
+            <span>+</span> Add New Student
+        </button>
+    </div>
+
+    <!-- Add Student Modal -->
+    <div id="addStudentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <h2>Add New Student</h2>
+            @using (Html.BeginForm("Add", "Students", FormMethod.Post, new { @id = "studentForm", enctype = "multipart/form-data" }))
+            {
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Student ID</label>
+                            @Html.TextBoxFor(m => m.NewStudent.StudentID, new { @class = "form-control", placeholder = "2025-BIIT-4266", required = "required" })
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Name</label>
+                            @Html.TextBoxFor(m => m.NewStudent.Name, new { @class = "form-control", required = "required" })
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>CNIC</label>
+                            @Html.TextBoxFor(m => m.NewStudent.CNIC, new { @class = "form-control", placeholder = "12345-1234567-1", required = "required" })
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Gender</label>
+                            @Html.DropDownListFor(m => m.NewStudent.Gender, new SelectList(new[] { "Male", "Female", "Other" }), "-- Select Gender --", new { @class = "form-control", required = "required" })
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Email</label>
+                            @Html.TextBoxFor(m => m.NewStudent.Email, new { @class = "form-control", type = "email", required = "required" })
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Phone</label>
+                            @Html.TextBoxFor(m => m.NewStudent.Phone, new { @class = "form-control", placeholder = "03001234567", required = "required" })
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>City</label>
+                            @Html.TextBoxFor(m => m.NewStudent.City, new { @class = "form-control", required = "required" })
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Photo</label>
+                            <input type="file" name="photo" class="form-control" accept="image/*" />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Address</label>
+                        @Html.TextAreaFor(m => m.NewStudent.Address, new { @class = "form-control", rows = 3, required = "required" })
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Add Student</button>
+                    <button type="button" class="btn btn-secondary" id="cancelModal">Cancel</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Update Student Modal -->
+<div id="updateStudentModal" class="modal">
+    <div class="modal-content">
+        <span class="close" id="closeUpdateModal">&times;</span>
+        <h2>Edit Student</h2>
+        @using (Html.BeginForm("Update", "Students", FormMethod.Post, new { @id = "updateStudentForm", enctype = "multipart/form-data" }))
+        {
+            <input type="hidden" id="UpdateStudent_ID" name="StudentID" />
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>Student ID</label>
+                        <input type="text" id="UpdateStudent_StudentID" name="StudentID" class="form-control" required />
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Name</label>
+                        <input type="text" id="UpdateStudent_Name" name="Name" class="form-control" required />
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>CNIC</label>
+                        <input type="text" id="UpdateStudent_CNIC" name="CNIC" class="form-control" required />
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Gender</label>
+                        <select id="UpdateStudent_Gender" name="Gender" class="form-control" required>
+                            <option value="">-- Select Gender --</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>Email</label>
+                        <input type="email" id="UpdateStudent_Email" name="Email" class="form-control" required />
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Phone</label>
+                        <input type="text" id="UpdateStudent_Phone" name="Phone" class="form-control" required />
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>City</label>
+                        <input type="text" id="UpdateStudent_City" name="City" class="form-control" required />
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Photo</label>
+                        <input type="file" name="photo" class="form-control" accept="image/*" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Address</label>
+                    <textarea id="UpdateStudent_Address" name="Address" class="form-control" rows="3" required></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-success">Update Student</button>
+                <button type="button" class="btn btn-secondary" id="cancelUpdateModal">Cancel</button>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- View Student Modal -->
+<div id="viewStudentModal" class="modal">
+    <div class="modal-content">
+        <span class="close" id="closeViewModal">&times;</span>
+        <h2>Student Details</h2>
+        <div class="modal-body">
+            <div class="student-photo">
+                <img id="ViewStudent_Photo" src="" alt="Student Photo" />
+            </div>
+            <p><strong>Student ID:</strong> <span id="ViewStudent_StudentID"></span></p>
+            <p><strong>Name:</strong> <span id="ViewStudent_Name"></span></p>
+            <p><strong>CNIC:</strong> <span id="ViewStudent_CNIC"></span></p>
+            <p><strong>Gender:</strong> <span id="ViewStudent_Gender"></span></p>
+            <p><strong>Email:</strong> <span id="ViewStudent_Email"></span></p>
+            <p><strong>Phone:</strong> <span id="ViewStudent_Phone"></span></p>
+            <p><strong>City:</strong> <span id="ViewStudent_City"></span></p>
+            <p><strong>Address:</strong> <span id="ViewStudent_Address"></span></p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="closeViewModalBtn">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Students Table -->
+<div class="filters">
+    @using (Html.BeginForm("Index", "Students", FormMethod.Get))
+    {
+        <input type="text" name="searchTerm" class="search-input" placeholder="Search students..." />
+        <select name="gender" class="filter-select">
+            <option value="">All Genders</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+        </select>
+        <select name="city" class="filter-select">
+            <option value="">All Cities</option>
+            <!-- Add your city options here -->
+        </select>
+        <button type="submit" class="btn btn-secondary">Search & Filter</button>
+    }
+</div>
+
+<table class="students-table table table-bordered">
+    <thead>
+        <tr>
+            <th>Student ID</th>
+            <th>Name</th>
+            <th>CNIC</th>
+            <th>Gender</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>City</th>
+            <th>Address</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var student in Model.StudentList)
+        {
+            <tr>
+                <td>@student.StudentID</td>
+                <td>@student.Name</td>
+                <td>@student.CNIC</td>
+                <td>@student.Gender</td>
+                <td>@student.Email</td>
+                <td>@student.Phone</td>
+                <td>@student.City</td>
+                <td>@(string.Join(" ", student.Address.Split(' ').Take(3)) + "...")</td>
+                <td>
+                    <div class="action-menu-container">
+                        <button type="button" class="action-menu-btn">---</button>
+                        <div class="action-menu-dropdown" style="display:none;">
+                            <button type="button" class="btnview viewStudentBtn" data-student-id="@student.StudentID">View</button>
+                            <button type="button" class="btnedit editStudentBtn" data-student-id="@student.StudentID">Edit</button>
+                            @using (Html.BeginForm("Delete", "Students", FormMethod.Post, new { onsubmit = "return confirm('Are you sure?');" }))
+                            {
+                                @Html.Hidden("id", student.StudentID)
+                                <button type="submit" class="btndelete">Delete</button>
+                            }
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Pagination Controls -->
+<!-- Add this after your table -->
+<div class="pagination-container">
+    @if (Model.TotalPages > 1)
+    {
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                <!-- First Page -->
+                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = 1, pageSize = Model.PageSize, searchTerm = Request["searchTerm"], gender = Request["gender"], city = Request["city"] })">&laquo;</a>
+                </li>
+
+                <!-- Previous Page -->
+                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = Model.CurrentPage - 1, pageSize = Model.PageSize, searchTerm = Request["searchTerm"], gender = Request["gender"], city = Request["city"] })">Previous</a>
+                </li>
+
+                @{
+                    int startPage = Math.Max(1, Model.CurrentPage - 2);
+                    int endPage = Math.Min(Model.TotalPages, startPage + 4);
+                    startPage = Math.Max(1, endPage - 4);
+                }
+
+                @for (int i = startPage; i <= endPage; i++)
+                {
+                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { page = i, pageSize = Model.PageSize, searchTerm = Request["searchTerm"], gender = Request["gender"], city = Request["city"] })">@i</a>
+                    </li>
+                }
+
+                <!-- Next Page -->
+                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = Model.CurrentPage + 1, pageSize = Model.PageSize, searchTerm = Request["searchTerm"], gender = Request["gender"], city = Request["city"] })">Next</a>
+                </li>
+
+                <!-- Last Page -->
+                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = Model.TotalPages, pageSize = Model.PageSize, searchTerm = Request["searchTerm"], gender = Request["gender"], city = Request["city"] })">&raquo;</a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="pagination-info">
+            Showing @(((Model.CurrentPage - 1) * Model.PageSize) + 1) to @(Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalCount)) of @Model.TotalCount entries
+        </div>
+
+        <div class="pagination-size">
+            <label>Show entries:</label>
+            <select id="pageSize" onchange="changePageSize(this.value)">
+                <option value="10" @(Model.PageSize == 10 ? "selected" : "")>10</option>
+                <option value="25" @(Model.PageSize == 25 ? "selected" : "")>25</option>
+                <option value="50" @(Model.PageSize == 50 ? "selected" : "")>50</option>
+                <option value="100" @(Model.PageSize == 100 ? "selected" : "")>100</option>
+            </select>
+        </div>
+    }
+</div>
+
+
+<!-- ... Keep existing pagination code ... -->
+
+<script>
+    $(document).ready(function () {
+        // Add Student Modal
+        const addModal = $("#addStudentModal");
+        const addForm = $("#studentForm");
+
+        // Update Student Modal
+        const updateModal = $("#updateStudentModal");
+        const updateForm = $("#updateStudentForm");
+
+        // Open Add Modal
+        $("#addStudentBtn").on("click", function () {
+            addForm[0].reset();
+            addModal.fadeIn();
+        });
+
+        // Action Menu Dropdown
+        $(".action-menu-btn").on("click", function (e) {
+            e.stopPropagation();
+            $(".action-menu-dropdown").hide();
+            $(this).siblings(".action-menu-dropdown").toggle();
+        });
+
+        // Edit Student
+        $(".editStudentBtn").click(function () {
+            var studentId = $(this).data("student-id");
+            $.ajax({
+                url: '/Students/GetStudentById',
+                type: 'GET',
+                data: { id: studentId },
+                success: function (student) {
+                    $("#UpdateStudent_StudentID").val(student.StudentID);
+                    $("#UpdateStudent_Name").val(student.Name);
+                    $("#UpdateStudent_CNIC").val(student.CNIC);
+                    $("#UpdateStudent_Gender").val(student.Gender);
+                    $("#UpdateStudent_Email").val(student.Email);
+                    $("#UpdateStudent_Phone").val(student.Phone);
+                    $("#UpdateStudent_City").val(student.City);
+                    $("#UpdateStudent_Address").val(student.Address);
+                    updateModal.fadeIn();
+                },
+                error: function () {
+                    alert("Failed to load student details.");
+                }
+            });
+        });
+
+        // View Student
+        $(".viewStudentBtn").click(function () {
+            var studentId = $(this).data("student-id");
+            $.ajax({
+                url: '/Students/GetStudentById',
+                type: 'GET',
+                data: { id: studentId },
+                success: function (student) {
+                    $("#ViewStudent_StudentID").text(student.StudentID);
+                    $("#ViewStudent_Name").text(student.Name);
+                    $("#ViewStudent_CNIC").text(student.CNIC);
+                    $("#ViewStudent_Gender").text(student.Gender);
+                    $("#ViewStudent_Email").text(student.Email);
+                    $("#ViewStudent_Phone").text(student.Phone);
+                    $("#ViewStudent_City").text(student.City);
+                    $("#ViewStudent_Address").text(student.Address);
+                    if (student.Photo) {
+                        $("#ViewStudent_Photo").attr("src", "data:image/jpeg;base64," + student.Photo);
+                    }
+                    $("#viewStudentModal").fadeIn();
+                },
+                error: function () {
+                    alert("Failed to load student details.");
+                }
+            });
+        });
+
+        // Close modals
+        $(".close, #cancelModal, #cancelUpdateModal, #closeViewModalBtn").on("click", function () {
+            $(".modal").fadeOut();
+            addForm[0].reset();
+            updateForm[0].reset();
+        });
+    function changePageSize(size) {
+    window.location = '@Url.Action("Index")?page=1&pageSize=' + size +
+        '&searchTerm=@Request["searchTerm"]&gender=@Request["gender"]&city=@Request["city"]';
+}
+        // Form validation
+        $("form").on("submit", function (e) {
+            let isValid = true;
+            $(this).find(".form-control[required]").each(function () {
+                if (!$(this).val().trim()) {
+                    $(this).css("border", "1px solid red");
+                    isValid = false;
+                } else {
+                    $(this).css("border", "1px solid #ccc");
+                }
+            });
+            if (!isValid) {
+                e.preventDefault();
+                alert("Please fill in all required fields.");
+            }
+        });
+    });
+</script>
+
+<style>
+    /* Keep existing styles and add/modify these: */
+    .student-photo img {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+    }
+
+    /* ... Rest of your existing styles ... */
+</style>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script>
+    $(document).ready(function () {
+        // Add Student Modal
+        const addModal = $("#addStudentModal");
+        const addForm = $("#studentForm");
+
+        // Open Add Modal
+        $("#addStudentBtn").on("click", function () {
+            addForm[0].reset();
+            addModal.fadeIn();
+        });
+
+        // Close Add Modal
+        $("#closeModal, #cancelModal").on("click", function () {
+            addModal.fadeOut();
+            addForm[0].reset();
+        });
+
+        // Action menu logic
+        $(".action-menu-btn").on("click", function (e) {
+            e.stopPropagation();
+            $(".action-menu-dropdown").hide();
+            $(this).siblings(".action-menu-dropdown").toggle();
+        });
+        $(document).on("click", function () {
+            $(".action-menu-dropdown").hide();
+        });
+        $(".action-menu-dropdown").on("click", function (e) {
+            e.stopPropagation();
+        });
+
+        // Prevent Enter key from submitting the form in Add
+        addForm.on("keydown", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+            }
+        });
+
+        // Prevent form submission if any field is empty (Add)
+        addForm.on("submit", function (e) {
+            let isValid = true;
+            addForm.find(".form-control[required]").each(function () {
+                if (!$(this).val().trim()) {
+                    $(this).css("border", "1px solid red");
+                    isValid = false;
+                } else {
+                    $(this).css("border", "1px solid #ccc");
+                }
+            });
+            if (!isValid) {
+                e.preventDefault();
+                alert("Please fill in all required fields.");
+            }
+        });
+
+        // TODO: Add AJAX for Edit/View modals if required
+    });</script>
+
+<style>
+    .student-container {
+        margin: 20px;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+    .add-student-btn {
+        background-color: #007bff;
+        color: white;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    .filters {
+        display: flex;
+        gap: 12px;
+        margin-right: 10px;
+        margin-left: 10px;
+        min-width: 1100px;
+        flex-wrap: wrap;
+    }
+
+    .search-input,
+    .filter-select,
+    .btn-secondary {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        height: 40px;
+    }
+
+    .search-input {
+        width: 400px;
+        height: 20px;
+    }
+
+    .filter-select {
+        width: 220px;
+    }
+
+    .btn-secondary {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+        width: 120px;
+    }
+
+    .students-table {
+        width: 100%;
+        margin-top: 20px;
+    }
+
+        .students-table th, .students-table td {
+            text-align: center;
+            vertical-align: middle;
+        }
+
+    .action-menu-container {
+        position: relative;
+        display: inline-block;
+    }
+
+    .action-menu-btn {
+        background: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 22px;
+        width: 40px;
+        height: 25px;
+        cursor: pointer;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        transition: background 0.2s;
+    }
+
+        .action-menu-btn:hover {
+            background: #3498db;
+        }
+
+    .action-menu-dropdown {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 45px;
+        background: #ffffff;
+        border: 1px solid #aaa;
+        border-radius: 8px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        z-index: 10;
+        min-width: 120px;
+        padding: 8px 0;
+    }
+
+        .action-menu-dropdown button {
+            display: block;
+            width: 100%;
+            border: none;
+            text-align: left;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+    .btnview, .btnedit, .btndelete {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-right: 7px;
+        margin-top: 5px;
+    }
+
+    .btnview {
+        background-color: #ffffff;
+        color: black;
+        width: 80px;
+    }
+
+        .btnview:hover {
+            background-color: #2980b9;
+        }
+
+    .btnedit {
+        background-color: #ffffff;
+        color: black;
+        width: 80px;
+    }
+
+        .btnedit:hover {
+            background-color: #f39c12;
+        }
+
+    .btndelete {
+        background-color: #ffffff;
+        color: black;
+        width: 80px;
+    }
+
+        .btndelete:hover {
+            background-color: #c0392b;
+        }
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.4);
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background-color: #fff;
+        padding: 20px;
+        width: 90%;
+        max-width: 800px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        position: relative;
+    }
+
+    .close {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        font-size: 28px;
+        font-weight: bold;
+        color: #aaa;
+        cursor: pointer;
+    }
+
+        .close:hover {
+            color: #000;
+        }
+
+    .form-row {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+
+    .form-group {
+        flex: 1;
+    }
+
+        .form-group.col-md-6 {
+            flex: 0 0 calc(50% - 10px);
+        }
+
+    .form-control {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    textarea.form-control {
+        resize: vertical;
+    }
+
+    label {
+        font-weight: 500;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding-top: 10px;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .pagination .page-link {
+        display: block;
+        padding: 8px 14px;
+        margin: 0 2px;
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        color: #007bff;
+        border-radius: 4px;
+        text-decoration: none;
+    }
+
+    .pagination .active .page-link {
+        background: #007bff;
+        color: #fff;
+        border-color: #007bff;
+    }
+
+    .pagination .disabled .page-link {
+        color: #aaa;
+        pointer-events: none;
+        background: #eee;
+    }
+</style>

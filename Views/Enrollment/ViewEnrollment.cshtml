@@ -1,0 +1,199 @@
+﻿@model SMSProject.Models.CourseM
+
+@{
+    ViewBag.Title = "View Enrollment";
+    var student = Model?.EnrollList?.FirstOrDefault();
+}
+
+<style>
+    .student-photo {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 10px;
+        box-shadow: 0 0 5px #aaa;
+        margin-bottom: 10px;
+    }
+
+    .student-info h5 {
+        margin-bottom: 6px;
+    }
+
+    .student-info-box {
+        background-color: #f7f9fc;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    .courses-table th, .courses-table td {
+        vertical-align: middle;
+        text-align: center;
+    }
+
+    .promote-btn {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        border: none;
+        padding: 12px 20px;
+        font-weight: bold;
+        font-size: 16px;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+        color: #fff;
+    }
+
+        .promote-btn:hover {
+            background: linear-gradient(135deg, #0056b3, #004080);
+            box-shadow: 0 6px 14px rgba(0, 86, 179, 0.4);
+            transform: scale(1.03);
+        }
+
+    .promo {
+        text-align: right;
+        margin-bottom: 20px;
+        margin-left: 20px;
+        margin-right: 20px;
+    }
+
+    .btn-sm:hover {
+        margin: 2px;
+        color: #007bff;
+    }
+</style>
+
+<div class="container mt-4">
+    @if (TempData["Info"] != null)
+    {
+        <div class="alert alert-info">@TempData["Info"]</div>
+    }
+
+    @if (TempData["Error1"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error1"]</div>
+    }
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error3"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error3"]</div>
+    }
+
+    @if (TempData["Success3"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success3"]</div>
+    }
+
+    <h2 class="text-primary mb-4">Student Enrollment Details</h2>
+
+    <button type="button" class="btn btn-secondary mb-3" onclick="window.location.href='/Enrollment/Index'">Back</button>
+
+    @if (student != null)
+    {
+        <!-- ✅ Promotion Form -->
+        using (Html.BeginForm("PromoteStudent", "Enrollment", FormMethod.Post, new { onsubmit = "return confirm('Are you sure you want to Promote this student?');" }))
+        {
+            @Html.Hidden("EnrollmentID", student.EnrollmentID)
+
+            <div class="mb-2">
+                <label class="font-weight-bold text-danger">Select failed courses to re-enroll:</label>
+            </div>
+
+            if (ViewBag.FailedCourses != null && ViewBag.FailedCourses.EnrollList != null)
+            {
+                foreach (var group in ViewBag.FailedCourses.EnrollList)
+                {
+                    <div class="form-check mb-1">
+                        <input type="checkbox" name="FailedCourses" value="@group.CourseID" class="form-check-input" id="chk_@group.CourseID" />
+                        <label class="form-check-label" for="chk_@group.CourseID">@group.CoursesName</label>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-muted">No failed courses available to re-enroll.</div>
+            }
+
+            <div class="promo">
+                <button type="submit" class="promote-btn">Promote</button>
+            </div>
+        }
+
+        <div class="row">
+            <!-- ✅ Student Info -->
+            <div class="col-md-4">
+                <div class="student-info-box text-center">
+                    @if (student.Photo != null)
+                    {
+                        <img src="data:image/jpeg;base64,@Convert.ToBase64String(student.Photo)" alt="Photo" class="student-photo" />
+                    }
+                    else
+                    {
+                        <img src="https://via.placeholder.com/150" alt="No Photo" class="student-photo" />
+                    }
+
+                    <div class="student-info mt-3 text-left">
+                        <h5><strong>Enrollment ID:</strong> @student.EnrollmentID</h5>
+                        <h5><strong>Student ID:</strong> @student.StudentID</h5>
+                        <h5><strong>Name:</strong> @student.StudentName</h5>
+                        <h5><strong>Gender:</strong> @student.Gender</h5>
+                        <h5><strong>Department:</strong> @student.Department</h5>
+                        <h5><strong>Semester:</strong> @student.Semester</h5>
+                        <h5><strong>Enroll Date:</strong> @student.EnrollDate.ToShortDateString()</h5>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ✅ Course List -->
+            <div class="col-md-8">
+                <h4>All Courses for this Semester:</h4>
+
+                @if (Model.EnrollList.Any())
+                {
+                    <table class="courses-table table table-bordered table-hover">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Course Name</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var group in Model.EnrollList)
+                            {
+                                var isFinal = group.Status == "Completed" || group.Status == "Failed";
+
+                                <tr>
+                                    <td>@group.CoursesName</td>
+                                    <td>@group.Status</td>
+                                    <td>
+                                        @using (Html.BeginForm("UpdateStatus", "Enrollment", FormMethod.Post, new { onsubmit = "return confirm('Are you sure you want to update the course status?');" }))
+                                        {
+                                            @Html.Hidden("EnrollmentID", group.EnrollmentID)
+                                            @Html.Hidden("CoursesName", group.CoursesName)
+                                            @Html.Hidden("Semester", group.Semester)
+
+                                            <button type="submit" name="Status" value="Completed" class="btn btn-success btn-sm" @(isFinal ? "disabled" : "")>Completed</button>
+                                            <button type="submit" name="Status" value="Failed" class="btn btn-danger btn-sm" @(isFinal ? "disabled" : "")>Failed</button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="alert alert-info">No courses found for this semester.</div>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">No enrollment details found.</div>
+    }
+</div>
